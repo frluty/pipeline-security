@@ -1,4 +1,4 @@
-name: Reusable — Security Pipeline
+﻿name: Reusable â€” Security Pipeline
 
 on:
   workflow_call:
@@ -8,7 +8,7 @@ on:
         default: "auto"
         type: string
       app_path:
-        description: "Répertoire source"
+        description: "RÃ©pertoire source"
         default: "."
         type: string
       image_name:
@@ -73,14 +73,14 @@ jobs:
       language: ${{ steps.action.outputs.language }}
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/detect-language
+      - uses: frluty/pipeline-security/.github/actions/detect-language@main
         id: action
         with:
           language: ${{ inputs.language }}
           app_path: ${{ inputs.app_path }}
 
   harden:
-    name: Hardening ANSSI · Dockerfile
+    name: Hardening ANSSI Â· Dockerfile
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: detect
@@ -89,12 +89,12 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/harden-dockerfile
+      - uses: frluty/pipeline-security/.github/actions/harden-dockerfile@main
         with:
           dockerfile: ${{ inputs.dockerfile }}
 
   code-scan:
-    name: "CodeQL · ${{ needs.detect.outputs.language }}"
+    name: "CodeQL Â· ${{ needs.detect.outputs.language }}"
     runs-on: ubuntu-latest
     timeout-minutes: 60
     needs: detect
@@ -105,12 +105,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: ./.github/actions/scan-code
+      - uses: frluty/pipeline-security/.github/actions/scan-code@main
         with:
           language: ${{ needs.detect.outputs.language }}
 
   dep-scan:
-    name: Deps · Trivy FS
+    name: Deps Â· Trivy FS
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: detect
@@ -119,14 +119,14 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/scan-deps
+      - uses: frluty/pipeline-security/.github/actions/scan-deps@main
         with:
           app_path:              ${{ inputs.app_path }}
           severity:              ${{ inputs.severity }}
           fail_on_vulnerability: ${{ inputs.fail_on_vulnerability && 'true' || 'false' }}
 
   build-push:
-    name: "Build & Push · ${{ inputs.registry_type }}"
+    name: "Build & Push Â· ${{ inputs.registry_type }}"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [detect, harden, code-scan, dep-scan]
@@ -148,10 +148,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
 
-      - uses: ./.github/actions/registry-login-ghcr
+      - uses: frluty/pipeline-security/.github/actions/registry-login-ghcr@main
         if: inputs.registry_type == 'ghcr'
 
-      - uses: ./.github/actions/registry-login-acr
+      - uses: frluty/pipeline-security/.github/actions/registry-login-acr@main
         if: inputs.registry_type == 'acr'
         with:
           registry_url:    ${{ inputs.registry_url }}
@@ -160,7 +160,7 @@ jobs:
           tenant_id:       ${{ secrets.AZURE_TENANT_ID }}
           subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - uses: ./.github/actions/registry-login-harbor
+      - uses: frluty/pipeline-security/.github/actions/registry-login-harbor@main
         if: inputs.registry_type == 'harbor'
         with:
           registry_url: ${{ inputs.registry_url }}
@@ -176,7 +176,7 @@ jobs:
             acr|harbor) echo "prefix=${{ inputs.registry_url }}"              >> "$GITHUB_OUTPUT" ;;
           esac
 
-      - uses: ./.github/actions/docker-metadata
+      - uses: frluty/pipeline-security/.github/actions/docker-metadata@main
         id: meta
         with:
           image_name:      ${{ inputs.image_name }}
@@ -209,7 +209,7 @@ jobs:
           push-to-registry: true
 
   image-scan:
-    name: Image Scan · Trivy + Dockle
+    name: Image Scan Â· Trivy + Dockle
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: build-push
@@ -221,10 +221,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./.github/actions/registry-login-ghcr
+      - uses: frluty/pipeline-security/.github/actions/registry-login-ghcr@main
         if: inputs.registry_type == 'ghcr'
 
-      - uses: ./.github/actions/registry-login-acr
+      - uses: frluty/pipeline-security/.github/actions/registry-login-acr@main
         if: inputs.registry_type == 'acr'
         with:
           registry_url:    ${{ inputs.registry_url }}
@@ -233,21 +233,21 @@ jobs:
           tenant_id:       ${{ secrets.AZURE_TENANT_ID }}
           subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - uses: ./.github/actions/registry-login-harbor
+      - uses: frluty/pipeline-security/.github/actions/registry-login-harbor@main
         if: inputs.registry_type == 'harbor'
         with:
           registry_url: ${{ inputs.registry_url }}
           username:     ${{ secrets.HARBOR_USERNAME }}
           password:     ${{ secrets.HARBOR_PASSWORD }}
 
-      - uses: ./.github/actions/scan-image
+      - uses: frluty/pipeline-security/.github/actions/scan-image@main
         with:
           image_uri:             ${{ needs.build-push.outputs.image_uri }}
           severity:              ${{ inputs.severity }}
           fail_on_vulnerability: ${{ inputs.fail_on_vulnerability && 'true' || 'false' }}
 
   sign:
-    name: "Sign · ${{ inputs.signing_mode }}"
+    name: "Sign Â· ${{ inputs.signing_mode }}"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [build-push, image-scan]
@@ -262,10 +262,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./.github/actions/registry-login-ghcr
+      - uses: frluty/pipeline-security/.github/actions/registry-login-ghcr@main
         if: inputs.registry_type == 'ghcr'
 
-      - uses: ./.github/actions/registry-login-acr
+      - uses: frluty/pipeline-security/.github/actions/registry-login-acr@main
         if: inputs.registry_type == 'acr'
         with:
           registry_url:    ${{ inputs.registry_url }}
@@ -274,14 +274,14 @@ jobs:
           tenant_id:       ${{ secrets.AZURE_TENANT_ID }}
           subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - uses: ./.github/actions/registry-login-harbor
+      - uses: frluty/pipeline-security/.github/actions/registry-login-harbor@main
         if: inputs.registry_type == 'harbor'
         with:
           registry_url: ${{ inputs.registry_url }}
           username:     ${{ secrets.HARBOR_USERNAME }}
           password:     ${{ secrets.HARBOR_PASSWORD }}
 
-      - uses: ./.github/actions/sign-image
+      - uses: frluty/pipeline-security/.github/actions/sign-image@main
         with:
           image_uri:          ${{ needs.build-push.outputs.image_uri }}
           signing_mode:       ${{ inputs.signing_mode }}
