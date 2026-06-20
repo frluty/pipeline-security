@@ -1,0 +1,25 @@
+name: Code Scan — CodeQL
+description: "Analyse SAST CodeQL pour Python ou Node."
+
+inputs:
+  language:
+    description: "python | node | unknown"
+    required: true
+
+runs:
+  using: composite
+  steps:
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ inputs.language == 'node' && 'javascript' || inputs.language }}
+        queries: security-extended
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Analyze
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{ inputs.language }}"

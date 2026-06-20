@@ -1,0 +1,27 @@
+name: Harden Dockerfile — ANSSI
+description: "Lint Dockerfile avec Hadolint (recommandations ANSSI conteneurs)."
+
+inputs:
+  dockerfile:
+    description: "Chemin vers le Dockerfile"
+    default: "Dockerfile"
+
+runs:
+  using: composite
+  steps:
+
+    - name: Hadolint · lint Dockerfile
+      uses: hadolint/hadolint-action@v3.1.0
+      with:
+        dockerfile:  ${{ inputs.dockerfile }}
+        format:      sarif
+        output-file: hadolint.sarif
+        no-fail:     false
+
+    - name: Upload SARIF
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: hadolint.sarif
+        category:   hadolint
+      continue-on-error: true

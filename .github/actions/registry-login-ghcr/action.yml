@@ -1,0 +1,13 @@
+name: Registry Login — GHCR
+description: "Authentification au GitHub Container Registry."
+
+runs:
+  using: composite
+  steps:
+
+    - name: Login · ghcr.io
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ github.token }}

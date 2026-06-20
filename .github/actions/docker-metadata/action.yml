@@ -1,0 +1,49 @@
+name: Docker Metadata
+description: "Génère les tags et labels OCI pour l'image Docker."
+
+inputs:
+  image_name:
+    description: "Nom de l'image en kebab-case"
+    required: true
+  registry_prefix:
+    description: "Préfixe du registre (ex: ghcr.io/myorg)"
+    required: true
+  language:
+    description: "Langage détecté (python | node)"
+    default: ""
+
+outputs:
+  tags:
+    description: "Liste de tags Docker"
+    value: ${{ steps.meta.outputs.tags }}
+  labels:
+    description: "Labels OCI"
+    value: ${{ steps.meta.outputs.labels }}
+  image_base:
+    description: "URI de base sans tag (registre/image)"
+    value: ${{ steps.base.outputs.value }}
+
+runs:
+  using: composite
+  steps:
+
+    - name: Compute image base
+      id: base
+      shell: bash
+      run: |
+        echo "value=${{ inputs.registry_prefix }}/${{ inputs.image_name }}" >> "$GITHUB_OUTPUT"
+
+    - name: Docker Metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ inputs.registry_prefix }}/${{ inputs.image_name }}
+        tags: |
+          type=sha,format=long
+          type=ref,event=branch
+          type=ref,event=pr
+          type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+        labels: |
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          language=${{ inputs.language }}

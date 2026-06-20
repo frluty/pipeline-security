@@ -1,0 +1,22 @@
+name: Registry Login — Harbor
+description: "Authentification à un registre Harbor."
+
+inputs:
+  registry_url:
+    description: "Hostname du registre Harbor (ex: harbor.example.com)"
+    required: true
+  username:
+    required: true
+  password:
+    required: true
+
+runs:
+  using: composite
+  steps:
+
+    - name: Login · Harbor
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry_url }}
+        username: ${{ inputs.username }}
+        password: ${{ inputs.password }}
