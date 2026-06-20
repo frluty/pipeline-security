@@ -13,10 +13,12 @@ runs:
     - name: Hadolint · lint Dockerfile
       uses: hadolint/hadolint-action@v3.1.0
       with:
-        dockerfile:  ${{ inputs.dockerfile }}
-        format:      sarif
-        output-file: hadolint.sarif
-        no-fail:     false
+        dockerfile:          ${{ inputs.dockerfile }}
+        format:              sarif
+        output-file:         hadolint.sarif
+        no-fail:             false
+        failure-threshold:   warning
+        trusted-registries:  gcr.io,ghcr.io,cgr.dev
 
     - name: Upload SARIF
       if: always()
