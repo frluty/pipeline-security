@@ -19,6 +19,7 @@ runs:
         no-fail:             false
         failure-threshold:   warning
         trusted-registries:  gcr.io,ghcr.io,cgr.dev
+        config:              .hadolint.yaml
 
     - name: Upload SARIF
       if: always()
