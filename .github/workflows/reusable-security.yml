@@ -52,6 +52,7 @@ on:
       HARBOR_PASSWORD:       { required: false }
       COSIGN_PRIVATE_KEY:    { required: false }
       COSIGN_PASSWORD:       { required: false }
+      GITLEAKS_LICENSE:      { required: false }
 
     outputs:
       image_digest:
@@ -65,8 +66,23 @@ concurrency:
 
 jobs:
 
+  secrets-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: frluty/pipeline-security/.github/actions/scan-secrets@main
+        env:
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
   detect:
     name: Detect Language
+    needs: secrets-scan
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
